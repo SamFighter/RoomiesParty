@@ -1,0 +1,28 @@
+{
+  "name": "roomiesparty",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SamFighter/RoomiesParty.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SamFighter/RoomiesParty/issues"
+  },
+  "homepage": "https://github.com/SamFighter/RoomiesParty#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

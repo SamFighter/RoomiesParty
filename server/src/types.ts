@@ -1,14 +1,15 @@
 import { WebSocket } from "ws";
 
-type Room = {
+export type Room = {
     id_host:        WebSocket;
-    status:         boolean;
-    creation_time:  number
-    Players:        Player[];
+    status:         "waiting" | "playing" | "finished";
+    creation_time:  number;
+    Players:        Map<string, Player>;
 }
 
-type Player = {
+export type Player = {
     username:   string;
     ready:      boolean;
-    id:         WebSocket;
+    id:         string;
+    ws:         WebSocket;
 }

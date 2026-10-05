@@ -1,5 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { Player, Room } from "./types";
+import { JoinRoomMessage, Player, Room } from "./types";
 
 //#################### Declaration
 //####
@@ -7,6 +7,7 @@ import { Player, Room } from "./types";
 const wss = new WebSocketServer({ port: 8080 });
 const clients : WebSocket[] = [];
 const parties = new Map<string, Room>();
+const PLAYER_MAX = 6;
 
 //#################### Server
 //####
@@ -59,4 +60,33 @@ function generateRoomCode() {
       code = Math.random().toString(36).substring(2, 8);
     } while (parties.has(code));
     return code;
+}
+
+function handleJoinRoom(client: WebSocket, message: JoinRoomMessage) {
+    const code = message.code;
+    const room = parties.get(code);
+    const username = message.username;
+    if (room === undefined) {
+        client.send(JSON.stringify({ type: "error", reason: "room_not_found", code: code }))
+        return;
+    }
+    if (room.status !== "waiting") {
+        client.send(JSON.stringify({ type: "error", reason: "room_occupied", code: code }))
+        return;
+    }
+    if (room.Players.size >= PLAYER_MAX) {
+        client.send(JSON.stringify({ type: "error", reason: "room_full", code: code }))
+        return;
+    }
+    if (!username) {
+        client.send(JSON.stringify({ type: "error", reason: "username_empty", code: code }))
+        return;
+    }
+    const alreadyExistant = Array.from(room.Players.values()).some((player) => {
+        return player.username === username;
+    });
+    if (alreadyExistant) {
+        client.send(JSON.stringify({ type: "error", reason: "username_taken", code: code}))
+        return;
+    }
 }

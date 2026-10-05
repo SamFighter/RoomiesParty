@@ -13,3 +13,10 @@ export type Player = {
     id:         string;
     ws:         WebSocket;
 }
+
+export type JoinRoomMessage = {
+    type:           "join_room";
+    code:           string;
+    username:       string;
+    reconnectId?:    string;
+}

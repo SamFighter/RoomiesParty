@@ -18,5 +18,12 @@ export type JoinRoomMessage = {
     type:           "join_room";
     code:           string;
     username:       string;
-    reconnectId?:    string;
+    reconnectId?:   string;
+}
+
+export type PlayerReadyMessage = {
+    type:   "player_ready"
+    code:   string;
+    id:     string;
+    ready:  boolean;
 }

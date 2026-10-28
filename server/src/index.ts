@@ -1,5 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
-import { JoinRoomMessage, Player, Room } from "./types";
+import { JoinRoomMessage, Player, PlayerReadyMessage, Room } from "./types";
 
 //#################### Declaration
 //####
@@ -21,21 +21,24 @@ wss.on("connection", (ws) => {
     const message = JSON.parse(data.toString());
     switch (message.type) 
     {
-      case "create_room":
-          let code = generateRoomCode();
-          const room: Room = {
-            id_host: ws,
-            status: "waiting",
-            creation_time: Date.now(),
-            Players: new Map<string, Player>(),
-          };
-          parties.set(code, room);
-          ws.send(JSON.stringify({ type:"room_created", code: code }))
-          break;
-      case "join_room":
-        handleJoinRoom(ws, message);
-        break;
-      default:
+        case "create_room":
+            let code = generateRoomCode();
+            const room: Room = {
+                id_host: ws,
+                status: "waiting",
+                creation_time: Date.now(),
+                Players: new Map<string, Player>(),
+            };
+            parties.set(code, room);
+            ws.send(JSON.stringify({ type:"room_created", code: code }))
+            break;
+        case "join_room":
+            handleJoinRoom(ws, message);
+            break;
+        case "player_ready":
+            handleReadyPlayer(ws, message);
+            break;
+        default:
         console.log(message);
     }
   });
@@ -101,4 +104,29 @@ function handleJoinRoom(client: WebSocket, message: JoinRoomMessage) {
     const playerArray = Array.from(room.Players.values())
     const wsPlayerArray = playerArray.map(player => player.ws)
     broadcast(wsPlayerArray, JSON.stringify({ type: "player_joined", username: username }), client);
+}
+
+function handleReadyPlayer(client: WebSocket, message: PlayerReadyMessage) {
+    const code = message.code;
+    const player_id = message.id
+    const room = parties.get(code);
+    if (room === undefined) {
+        client.send(JSON.stringify({ type: "error", reason: "room_not_found", code: code }))
+        return;
+    }
+    if (room.status === "playing") {
+        client.send(JSON.stringify({ type: "error", reason: "game_ongoing", code: code }))
+        return;
+    }
+    const actualPlayer = room.Players.get(player_id)
+    if (actualPlayer === undefined) {
+        client.send(JSON.stringify({ type: "error", reason: "player_not_found", code: code}))
+        return;
+    }
+    actualPlayer.ready = message.ready;
+    client.send(JSON.stringify({ type: "success", reason: "player_ready", code: code, ready: actualPlayer.ready}))
+    const playerArray = Array.from(room.Players.values())
+    const wsPlayerArray = playerArray.map(player => player.ws)
+    broadcast(wsPlayerArray, JSON.stringify({ type: "player_is_ready", username: actualPlayer.username, ready: actualPlayer.ready}), client);
+    room.id_host.send(JSON.stringify({ type: "Host - success", reason: "player_is_ready", username: actualPlayer.username, code: code, ready: actualPlayer.ready}))
 }

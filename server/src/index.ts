@@ -33,7 +33,7 @@ wss.on("connection", (ws) => {
           ws.send(JSON.stringify({ type:"room_created", code: code }))
           break;
       case "join_room":
-        //join_room
+        handleJoinRoom(ws, message);
         break;
       default:
         console.log(message);
@@ -89,4 +89,16 @@ function handleJoinRoom(client: WebSocket, message: JoinRoomMessage) {
         client.send(JSON.stringify({ type: "error", reason: "username_taken", code: code}))
         return;
     }
+    const player_id = crypto.randomUUID();
+    const newPlayer: Player = {
+      username: username,
+      ready: false,
+      id: player_id,
+      ws: client
+    }
+    room.Players.set(player_id, newPlayer);
+    client.send(JSON.stringify({ type: "success", reason: "join_room", code: code, id: player_id}))
+    const playerArray = Array.from(room.Players.values())
+    const wsPlayerArray = playerArray.map(player => player.ws)
+    broadcast(wsPlayerArray, JSON.stringify({ type: "player_joined", username: username }), client);
 }
